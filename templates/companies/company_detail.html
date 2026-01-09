@@ -112,13 +112,13 @@
                                 </p>
                             {% endif %}
                             {% if interview.notes %}
-                                <div style="margin-top: 8px; margin-bottom: 0; color: #7f8c8d; font-size: 14px;">
-                                    <p id="notes-preview-{{ interview.pk }}" style="margin: 0; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                        {{ interview.notes }}
+                                <div style="margin-top: 8px; margin-bottom: 0; color: #7f8c8d; font-size: 14px; max-width: 100%; overflow: hidden;">
+                                    <p id="notes-preview-{{ interview.pk }}" style="margin: 0; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;">
+                                        {{ interview.notes|truncatewords:8 }}
                                         <span style="color: #3498db; font-weight: bold;"> ...</span>
                                     </p>
-                                    <div id="notes-full-{{ interview.pk }}" style="display: none; margin-top: 8px; padding: 10px; background-color: #f8f9fa; border-radius: 4px;">
-                                        <p style="margin: 0; white-space: pre-wrap; word-wrap: break-word;">{{ interview.notes }}</p>
+                                    <div id="notes-full-{{ interview.pk }}" style="display: none; margin-top: 8px; padding: 10px; background-color: #f8f9fa; border-radius: 4px; max-width: 100%; overflow-x: auto;">
+                                        <p style="margin: 0; white-space: pre-wrap; word-wrap: break-word; max-width: 100%;">{{ interview.notes }}</p>
                                         <button type="button" class="btn btn-sm btn-outline-secondary mt-2" onclick="collapseNotes('{{ interview.pk }}')">Show Less</button>
                                     </div>
                                     <button type="button" class="btn btn-sm btn-outline-info mt-1" id="expand-btn-{{ interview.pk }}" onclick="expandNotes('{{ interview.pk }}')">Show Full Note</button>
