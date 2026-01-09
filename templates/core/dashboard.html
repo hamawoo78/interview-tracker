@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Dashboard - InterviewTracker{% endblock %}
+
+{% block content %}
+<div class="navbar-top">
+    <form method="get" class="d-flex gap-2">
+        <input type="text" name="q" class="form-control" placeholder="Search companies, positions, locations..." value="{{ query }}">
+        <button type="submit" class="btn btn-primary">Search</button>
+        {% if query %}
+            <a href="{% url 'dashboard' %}" class="btn btn-secondary">Clear</a>
+        {% endif %}
+    </form>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <h2 style="margin-bottom: 20px;">Companies</h2>
+        {% if companies %}
+            {% for company in companies %}
+                <!-- <div class="card-company" onclick="window.location='{% url 'company_detail' company.pk %}'"> -->
+                <div class="card-company" data-url="{% url 'company_detail' company.pk %}" style="cursor: pointer;">
+                    <div class="card-company-header">
+                        <div>
+                            <div class="card-company-title">{{ company.name }}</div>
+                            <div class="card-company-subtitle">{{ company.position_title }}</div>
+                            {% if company.location %}
+                                <div class="card-company-subtitle"><i class="bi bi-geo-alt"></i> {{ company.location }}</div>
+                            {% endif %}
+                        </div>
+                        <span class="status-badge status-{{ company.status }}">
+                            {{ company.get_status_display }}
+                        </span>
+                    </div>
+                    
+                    <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            {% if company.salary_min and company.salary_max %}
+                                <small style="color: #7f8c8d;">
+                                    💰 ${{ company.salary_min|floatformat:0 }} - ${{ company.salary_max|floatformat:0 }}
+                                </small>
+                            {% endif %}
+                        </div>
+                        <div>
+                            {% with latest_interview=company.get_latest_interview %}
+                                {% if latest_interview %}
+                                    <small style="color: #7f8c8d;">
+                                        Last interview: {{ latest_interview.start_datetime|naturaltime }}
+                                    </small>
+                                {% else %}
+                                    <small style="color: #7f8c8d;">No interviews yet</small>
+                                {% endif %}
+                            {% endwith %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="alert alert-info">
+                {% if query %}
+                    No companies found matching "{{ query }}". <a href="{% url 'company_create' %}">Create a new company</a>
+                {% else %}
+                    No companies yet. <a href="{% url 'company_create' %}">Add your first company</a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="col-md-4">
+        <div class="calendar-widget">
+            <h4 style="margin-bottom: 20px;">📅 Upcoming Interviews (Next 7 Days)</h4>
+            {% if interviews_by_day %}
+                {% for day, interviews in interviews_by_day.items %}
+                    <div class="calendar-day">
+                        <div class="calendar-day-header">
+                            {{ day|date:"l, M d" }}
+                        </div>
+                        {% for interview in interviews %}
+                            <div class="calendar-event">
+                                <strong>{{ interview.start_datetime|time:"H:i" }}</strong> - {{ interview.company.name }}
+                                {% if interview.interview_type %}
+                                    <br><small>{{ interview.get_interview_type_display }}</small>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p style="color: #7f8c8d; font-size: 14px;">No upcoming interviews in the next 7 days</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+document.querySelectorAll('.card-company').forEach(card => {
+    card.addEventListener('click', function() {
+        window.location = this.dataset.url;
+    });
+});
+</script>
+
+{% endblock %}

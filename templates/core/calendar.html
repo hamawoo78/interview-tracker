@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block title %}Calendar - InterviewTracker{% endblock %}
+
+{% block content %}
+<h2 style="margin-bottom: 20px;">📅 Interview Calendar</h2>
+
+<div class="calendar-widget">
+    {% if interviews_by_day %}
+        {% for day, interviews in interviews_by_day.items %}
+            <div class="calendar-day">
+                <div class="calendar-day-header">
+                    {{ day|date:"l, F d, Y" }}
+                </div>
+                {% for interview in interviews %}
+                    <div class="calendar-event" style="cursor: pointer;" onclick="window.location='{% url 'company_detail' interview.company.pk %}'">
+                        <div style="display: flex; justify-content: space-between;">
+                            <strong>{{ interview.start_datetime|time:"H:i" }}</strong>
+                            {% if interview.end_datetime %}
+                                <span style="color: #7f8c8d;">- {{ interview.end_datetime|time:"H:i" }}</span>
+                            {% endif %}
+                        </div>
+                        <div style="margin-top: 5px;">
+                            <strong>{{ interview.company.name }}</strong>
+                            {% if interview.position_title %}
+                                <br><small>{{ interview.company.position_title }}</small>
+                            {% endif %}
+                        </div>
+                        {% if interview.interview_type %}
+                            <div style="margin-top: 5px;">
+                                <span class="badge bg-info">{{ interview.get_interview_type_display }}</span>
+                            </div>
+                        {% endif %}
+                        {% if interview.interviewer_name %}
+                            <div style="margin-top: 5px; color: #7f8c8d; font-size: 13px;">
+                                👤 {{ interview.interviewer_name }}
+                            </div>
+                        {% endif %}
+                        {% if interview.meeting_link %}
+                            <div style="margin-top: 5px;">
+                                <a href="{{ interview.meeting_link }}" target="_blank" class="btn btn-sm btn-outline-primary">Join Meeting</a>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="alert alert-info">
+            No upcoming interviews in the next 7 days. <a href="{% url 'company_list' %}">View all companies</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

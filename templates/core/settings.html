@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block title %}Settings - InterviewTracker{% endblock %}
+
+{% block content %}
+<h2 style="margin-bottom: 20px;">⚙️ Settings</h2>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Timezone Settings</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-4">
+                        <label for="{{ form.auto_detect_timezone.id_for_label }}" class="form-label">
+                            <input type="checkbox" name="auto_detect_timezone" id="{{ form.auto_detect_timezone.id_for_label }}" 
+                                   class="form-check-input" {% if profile.auto_detect_timezone %}checked{% endif %}>
+                            Auto-detect timezone from IP address
+                        </label>
+                        <small class="form-text text-muted d-block mt-2">
+                            When enabled, your timezone will be automatically detected based on your IP address location.
+                            This helps ensure all interview times are displayed correctly in your local timezone.
+                        </small>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="{{ form.timezone.id_for_label }}" class="form-label">Timezone</label>
+                        {{ form.timezone }}
+                        {% if form.timezone.errors %}
+                            <div class="invalid-feedback d-block">{{ form.timezone.errors.0 }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted d-block mt-2">
+                            {% if profile.auto_detect_timezone %}
+                                Currently auto-detected: <strong>{{ current_timezone }}</strong>
+                            {% else %}
+                                Currently set to: <strong>{{ profile.timezone }}</strong>
+                            {% endif %}
+                        </small>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Save Settings</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">About Timezone Detection</h5>
+            </div>
+            <div class="card-body">
+                <h6>How it works:</h6>
+                <ul>
+                    <li>When you log in, your IP address is used to determine your geographic location</li>
+                    <li>Your timezone is automatically set based on your location</li>
+                    <li>All interview dates and times are displayed in your local timezone</li>
+                    <li>You can disable auto-detection and manually select a timezone</li>
+                </ul>
+
+                <h6 class="mt-4">Privacy:</h6>
+                <ul>
+                    <li>IP geolocation uses free public APIs (ip-api.com, ipapi.co)</li>
+                    <li>Only your IP address is sent to these services</li>
+                    <li>Results are cached for 24 hours to reduce API calls</li>
+                    <li>No personal data is stored or shared</li>
+                </ul>
+
+                <h6 class="mt-4">Supported Timezones:</h6>
+                <p>All IANA timezone identifiers are supported (e.g., America/New_York, Europe/London, Asia/Tokyo, etc.)</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Current Settings</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <strong>Auto-detect:</strong>
+                    <p>
+                        {% if profile.auto_detect_timezone %}
+                            <span class="badge bg-success">Enabled</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Disabled</span>
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="mb-3">
+                    <strong>Current Timezone:</strong>
+                    <p><code>{{ current_timezone }}</code></p>
+                </div>
+                <div class="mb-3">
+                    <strong>Saved Timezone:</strong>
+                    <p><code>{{ profile.timezone }}</code></p>
+                </div>
+                <div>
+                    <strong>Last Updated:</strong>
+                    <p>{{ profile.updated_at|date:"M d, Y H:i" }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

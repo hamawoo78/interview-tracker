@@ -1,0 +1,11 @@
+<div class="dropdown-menu" style="display: block; position: static; float: none; width: 100%; border: none; box-shadow: none; padding: 0;">
+    {% if companies %}
+        {% for company in companies %}
+            <a href="{% url 'company_detail' company.id %}" class="dropdown-item">
+                {{ company.name }}
+            </a>
+        {% endfor %}
+    {% else %}
+        <span class="dropdown-item disabled">No companies yet</span>
+    {% endif %}
+</div>

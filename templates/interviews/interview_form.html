@@ -1,0 +1,228 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if form.instance.pk %}Edit{% else %}Add{% endif %} Interview - InterviewTracker{% endblock %}
+
+{% block content %}
+<h2 style="margin-bottom: 20px;">
+    {% if form.instance.pk %}Edit Interview{% else %}Add Interview Event{% endif %}
+    <small style="color: #7f8c8d;">for {{ company.name }}</small>
+</h2>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <!-- AI Email Extraction Button (only show on create, not edit) -->
+                {% if not form.instance.pk %}
+                <div class="mb-3">
+                    <button type="button" class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#emailExtractionModal">
+                        <i class="bi bi-magic"></i> Paste Email (AI Fill)
+                    </button>
+                </div>
+                {% endif %}
+
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.start_datetime.id_for_label }}" class="form-label">Start Date & Time *</label>
+                            {{ form.start_datetime }}
+                            {% if form.start_datetime.errors %}
+                                <div class="invalid-feedback d-block">{{ form.start_datetime.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <!-- <div class="col-md-6 mb-3">
+                            <label for="{{ form.end_datetime.id_for_label }}" class="form-label">End Date & Time</label>
+                            {{ form.end_datetime }}
+                            {% if form.end_datetime.errors %}
+                                <div class="invalid-feedback d-block">{{ form.end_datetime.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div> -->
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.interview_type.id_for_label }}" class="form-label">Interview Type</label>
+                            {{ form.interview_type }}
+                            {% if form.interview_type.errors %}
+                                <div class="invalid-feedback d-block">{{ form.interview_type.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.interviewer_name.id_for_label }}" class="form-label">Interviewer Name</label>
+                            {{ form.interviewer_name }}
+                            {% if form.interviewer_name.errors %}
+                                <div class="invalid-feedback d-block">{{ form.interviewer_name.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.meeting_link.id_for_label }}" class="form-label">Meeting Link</label>
+                        {{ form.meeting_link }}
+                        {% if form.meeting_link.errors %}
+                            <div class="invalid-feedback d-block">{{ form.meeting_link.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.notes.id_for_label }}" class="form-label">Notes</label>
+                        {{ form.notes }}
+                        {% if form.notes.errors %}
+                            <div class="invalid-feedback d-block">{{ form.notes.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            {% if form.instance.pk %}Update Interview{% else %}Create Interview{% endif %}
+                        </button>
+                        <a href="{% url 'company_detail' company.pk %}" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Email Extraction -->
+<div class="modal fade" id="emailExtractionModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Extract Interview Details from Email</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="extractionMessage" class="alert" style="display: none;"></div>
+                <div class="mb-3">
+                    <label for="emailTextarea" class="form-label">Paste your interview email here:</label>
+                    <textarea id="emailTextarea" class="form-control" rows="8" placeholder="Paste the entire interview email..."></textarea>
+                </div>
+                <small class="text-muted">
+                    <i class="bi bi-info-circle"></i> 
+                    AI will extract: interviewer name, interview type, date/time, meeting link, and notes.
+                </small>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="extractBtn">
+                    <span id="extractBtnText">Extract Details</span>
+                    <span id="extractBtnSpinner" class="spinner-border spinner-border-sm ms-2" style="display: none;"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Handle email extraction
+document.getElementById('extractBtn').addEventListener('click', async function() {
+    const emailText = document.getElementById('emailTextarea').value.trim();
+    const messageDiv = document.getElementById('extractionMessage');
+    const extractBtn = document.getElementById('extractBtn');
+    const extractBtnText = document.getElementById('extractBtnText');
+    const extractBtnSpinner = document.getElementById('extractBtnSpinner');
+    
+    // Validate input
+    if (!emailText) {
+        messageDiv.className = 'alert alert-warning';
+        messageDiv.textContent = 'Please paste an email first.';
+        messageDiv.style.display = 'block';
+        return;
+    }
+    
+    // Show loading state
+    extractBtn.disabled = true;
+    extractBtnText.style.display = 'none';
+    extractBtnSpinner.style.display = 'inline-block';
+    messageDiv.style.display = 'none';
+    
+    try {
+        // Call API endpoint
+        const response = await fetch('{% url "extract_interview_email" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            },
+            body: JSON.stringify({ email_text: emailText })
+        });
+        
+        const result = await response.json();
+        
+        if (result.ok) {
+            // Success: Fill form fields with extracted data
+            fillFormFields(result.data);
+            
+            // Show success message
+            messageDiv.className = 'alert alert-success';
+            messageDiv.innerHTML = '<i class="bi bi-check-circle"></i> Details extracted! Review and edit below, then click "Create Interview".';
+            messageDiv.style.display = 'block';
+            
+            // Close modal after 2 seconds
+            setTimeout(() => {
+                bootstrap.Modal.getInstance(document.getElementById('emailExtractionModal')).hide();
+            }, 2000);
+        } else {
+            // Error from API
+            messageDiv.className = 'alert alert-danger';
+            messageDiv.innerHTML = `<i class="bi bi-exclamation-circle"></i> ${result.error}`;
+            messageDiv.style.display = 'block';
+        }
+    } catch (error) {
+        messageDiv.className = 'alert alert-danger';
+        messageDiv.innerHTML = `<i class="bi bi-exclamation-circle"></i> Network error: ${error.message}`;
+        messageDiv.style.display = 'block';
+    } finally {
+        // Reset button state
+        extractBtn.disabled = false;
+        extractBtnText.style.display = 'inline';
+        extractBtnSpinner.style.display = 'none';
+    }
+});
+
+// Fill form fields with extracted data
+function fillFormFields(data) {
+    // Interviewer name
+    if (data.interviewer_name) {
+        document.getElementById('id_interviewer_name').value = data.interviewer_name;
+    }
+    
+    // Interview type
+    if (data.interview_type) {
+        document.getElementById('id_interview_type').value = data.interview_type;
+    }
+    
+    // Start datetime (convert ISO to datetime-local format)
+    if (data.start_datetime_iso) {
+        try {
+            // ISO format: "2025-01-15T14:00:00" -> datetime-local format: "2025-01-15T14:00"
+            const isoString = data.start_datetime_iso;
+            const datetimeLocal = isoString.slice(0, 16); // Take first 16 chars (YYYY-MM-DDTHH:mm)
+            document.getElementById('id_start_datetime').value = datetimeLocal;
+        } catch (e) {
+            console.error('Error parsing datetime:', e);
+        }
+    }
+    
+    // Meeting link
+    if (data.meeting_link) {
+        document.getElementById('id_meeting_link').value = data.meeting_link;
+    }
+    
+    // Notes: Use original email text instead of AI-generated notes
+    const emailText = document.getElementById('emailTextarea').value.trim();
+    if (emailText) {
+        document.getElementById('id_notes').value = emailText;
+    }
+}
+
+// Clear modal on close
+document.getElementById('emailExtractionModal').addEventListener('hidden.bs.modal', function() {
+    document.getElementById('emailTextarea').value = '';
+    document.getElementById('extractionMessage').style.display = 'none';
+});
+</script>
+{% endblock %}

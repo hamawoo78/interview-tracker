@@ -1,0 +1,193 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}{{ company.name }} - InterviewTracker{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 20px;">
+    <div>
+        <h2>{{ company.name }}</h2>
+        <p style="color: #7f8c8d; margin-top: 5px;">
+            {% if company.position_title %}{{ company.position_title }}{% endif %}
+            {% if company.location %} • {{ company.location }}{% endif %}
+        </p>
+    </div>
+    <div>
+        <a href="{% url 'company_edit' company.pk %}" class="btn btn-primary">Edit</a>
+        <a href="{% url 'company_list' %}" class="btn btn-secondary">Back</a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <!-- Company Info -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Company Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <strong>Status:</strong>
+                        <span class="status-badge status-{{ company.status }}">{{ company.get_status_display }}</span>
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Position:</strong> {{ company.position_title|default:"N/A" }}
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <strong>Location:</strong> {{ company.location|default:"N/A" }}
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Website:</strong>
+                        {% if company.website_url %}
+                            <a href="{{ company.website_url }}" target="_blank">Visit</a>
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </div>
+                </div>
+                {% if company.salary_min or company.salary_max %}
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <strong>Salary Range:</strong>
+                            {% if company.salary_min and company.salary_max %}
+                                ${{ company.salary_min|floatformat:0 }} - ${{ company.salary_max|floatformat:0 }}
+                            {% elif company.salary_min %}
+                                ${{ company.salary_min|floatformat:0 }}+
+                            {% elif company.salary_max %}
+                                Up to ${{ company.salary_max|floatformat:0 }}
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+                {% if company.job_description_url or company.job_description_file %}
+                    <div class="row">
+                        <div class="col-md-12">
+                            <strong>Job Description:</strong>
+                            {% if company.job_description_url %}
+                                <a href="{{ company.job_description_url }}" target="_blank" class="btn btn-sm btn-outline-primary">View Online</a>
+                            {% endif %}
+                            {% if company.job_description_file %}
+                                <a href="{{ company.job_description_file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">Download File</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Interview Events -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Interview Events</h5>
+                <a href="{% url 'interview_create' company.pk %}" class="btn btn-sm btn-primary">+ Add Interview</a>
+            </div>
+            <div class="card-body">
+                {% if interviews %}
+                    {% for interview in interviews %}
+                        <div style="border-bottom: 1px solid #dee2e6; padding-bottom: 15px; margin-bottom: 15px;">
+                            <div style="display: flex; justify-content: space-between; align-items: start;">
+                                <div>
+                                    <strong>{{ interview.start_datetime|date:"M d, Y H:i" }}</strong>
+                                    {% if interview.end_datetime %}
+                                        - {{ interview.end_datetime|time:"H:i" }}
+                                    {% endif %}
+                                    {% if interview.interview_type %}
+                                        <span class="badge bg-info">{{ interview.get_interview_type_display }}</span>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <a href="{% url 'interview_edit' interview.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>
+                                    <a href="{% url 'interview_delete' interview.pk %}" class="btn btn-sm btn-outline-danger">Delete</a>
+                                </div>
+                            </div>
+                            {% if interview.interviewer_name %}
+                                <p style="margin-top: 8px; margin-bottom: 0; color: #7f8c8d;">👤 {{ interview.interviewer_name }}</p>
+                            {% endif %}
+                            {% if interview.meeting_link %}
+                                <p style="margin-top: 8px; margin-bottom: 0;">
+                                    <a href="{{ interview.meeting_link }}" target="_blank" class="btn btn-sm btn-outline-success">Join Meeting</a>
+                                </p>
+                            {% endif %}
+                            {% if interview.notes %}
+                                <p style="margin-top: 8px; margin-bottom: 0; color: #7f8c8d; font-size: 14px;">{{ interview.notes }}</p>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p style="color: #7f8c8d;">No interview events yet. <a href="{% url 'interview_create' company.pk %}">Add one</a></p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Interview Prep -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Interview Preparation</h5>
+                <a href="{% url 'prep_edit' company.pk %}" class="btn btn-sm btn-primary">Edit</a>
+            </div>
+            <div class="card-body">
+                {% if prep %}
+                    {% if prep.self_intro %}
+                        <div class="mb-4">
+                            <h6>Self-Introduction</h6>
+                            <p>{{ prep.self_intro|linebreaks }}</p>
+                        </div>
+                    {% endif %}
+                    {% if prep.why_apply %}
+                        <div class="mb-4">
+                            <h6>Why I Applied</h6>
+                            <p>{{ prep.why_apply|linebreaks }}</p>
+                        </div>
+                    {% endif %}
+                    {% if prep.questions_to_ask %}
+                        <div class="mb-4">
+                            <h6>Questions to Ask</h6>
+                            <p>{{ prep.questions_to_ask|linebreaks }}</p>
+                        </div>
+                    {% endif %}
+                    {% if prep.additional_notes %}
+                        <div class="mb-4">
+                            <h6>Additional Notes</h6>
+                            <p>{{ prep.additional_notes|linebreaks }}</p>
+                        </div>
+                    {% endif %}
+                    {% if not prep.self_intro and not prep.why_apply and not prep.questions_to_ask and not prep.additional_notes %}
+                        <p style="color: #7f8c8d;">No prep notes yet. <a href="{% url 'prep_edit' company.pk %}">Add some</a></p>
+                    {% endif %}
+                {% else %}
+                    <p style="color: #7f8c8d;">No prep notes yet. <a href="{% url 'prep_edit' company.pk %}">Create prep notes</a></p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Quick Info</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <strong>Created:</strong>
+                    <p style="color: #7f8c8d;">{{ company.created_at|date:"M d, Y" }}</p>
+                </div>
+                <div class="mb-3">
+                    <strong>Last Updated:</strong>
+                    <p style="color: #7f8c8d;">{{ company.updated_at|naturaltime }}</p>
+                </div>
+                {% with latest_interview=company.get_latest_interview %}
+                    {% if latest_interview %}
+                        <div>
+                            <strong>Latest Interview:</strong>
+                            <p style="color: #7f8c8d;">{{ latest_interview.start_datetime|naturaltime }}</p>
+                        </div>
+                    {% endif %}
+                {% endwith %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

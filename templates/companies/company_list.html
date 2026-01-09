@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block title %}Companies - InterviewTracker{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <h2>Companies</h2>
+    <a href="{% url 'company_create' %}" class="btn btn-primary">+ Add Company</a>
+</div>
+
+<div class="card" style="margin-bottom: 20px;">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-6">
+                <label for="status" class="form-label">Status</label>
+                <select name="status" id="status" class="form-select">
+                    <option value="">All Statuses</option>
+                    {% for value, label in statuses %}
+                        <option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label for="location" class="form-label">Location</label>
+                <input type="text" name="location" id="location" class="form-control" placeholder="Filter by location" value="{{ selected_location }}">
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">Filter</button>
+                <a href="{% url 'company_list' %}" class="btn btn-secondary">Clear</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if companies %}
+    <div class="row">
+        {% for company in companies %}
+            <div class="col-md-6 col-lg-4 mb-3">
+                <!-- <div class="card h-100" style="cursor: pointer;" onclick="window.location='{% url 'company_detail' company.pk %}'"> -->
+                <div class="card h-100" data-url="{% url 'company_detail' company.pk %}" style="cursor: pointer;">
+                    <div class="card-body">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                            <h5 class="card-title">{{ company.name }}</h5>
+                            <span class="status-badge status-{{ company.status }}">
+                                {{ company.get_status_display }}
+                            </span>
+                        </div>
+                        {% if company.position_title %}
+                            <p class="card-text"><strong>{{ company.position_title }}</strong></p>
+                        {% endif %}
+                        {% if company.location %}
+                            <p class="card-text"><small class="text-muted"><i class="bi bi-geo-alt"></i> {{ company.location }}</small></p>
+                        {% endif %}
+                        {% if company.salary_min and company.salary_max %}
+                            <p class="card-text"><small class="text-muted">💰 ${{ company.salary_min|floatformat:0 }} - ${{ company.salary_max|floatformat:0 }}</small></p>
+                        {% endif %}
+                        <div style="margin-top: 10px;">
+                            <a href="{% url 'company_edit' company.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    {% if is_paginated %}
+        <nav aria-label="Page navigation" style="margin-top: 20px;">
+            <ul class="pagination">
+                {% if page_obj.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?page=1">First</a></li>
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a></li>
+                {% endif %}
+                <li class="page-item active"><span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span></li>
+                {% if page_obj.has_next %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a></li>
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+{% else %}
+    <div class="alert alert-info">
+        No companies found. <a href="{% url 'company_create' %}">Create your first company</a>
+    </div>
+{% endif %}
+
+<script>
+document.querySelectorAll('.card').forEach(card => {
+    card.addEventListener('click', function() {
+        window.location = this.dataset.url;
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Company - InterviewTracker{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">Delete Company</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning" role="alert">
+                    <strong>⚠️ Warning!</strong> This action cannot be undone.
+                </div>
+
+                <p>Are you sure you want to delete <strong>{{ object.name }}</strong>?</p>
+
+                <div class="card mb-3" style="background-color: #f8f9fa;">
+                    <div class="card-body">
+                        <h6>This will also delete:</h6>
+                        <ul class="mb-0">
+                            <li><strong>{{ object.interviews.count }}</strong> interview event(s)</li>
+                            <li><strong>1</strong> interview prep note</li>
+                            <li>All associated data</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <form method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash"></i> Yes, Delete Company
+                    </button>
+                    <a href="{% url 'company_detail' object.pk %}" class="btn btn-secondary">
+                        <i class="bi bi-x-circle"></i> Cancel
+                    </a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

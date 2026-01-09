@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Interview - InterviewTracker{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">Delete Interview Event</h5>
+            </div>
+            <div class="card-body">
+                <p>Are you sure you want to delete this interview event?</p>
+                <p><strong>{{ object.company.name }}</strong></p>
+                <p>{{ object.start_datetime|date:"M d, Y H:i" }}</p>
+                
+                <form method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                    <a href="{% url 'company_detail' object.company.pk %}" class="btn btn-secondary">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
