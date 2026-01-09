@@ -136,7 +136,12 @@
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">Interview Preparation</h5>
-                <a href="{% url 'prep_edit' company.pk %}" class="btn btn-sm btn-primary">Edit</a>
+                <div class="gap-2" style="display: flex; gap: 8px;">
+                    <!-- <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#aiRatingModal" title="Get AI feedback on your prep answers">
+                        <i class="bi bi-stars"></i> AI Rating
+                    </button> -->
+                    <a href="{% url 'prep_edit' company.pk %}" class="btn btn-sm btn-primary">Edit</a>
+                </div>
             </div>
             <div class="card-body">
                 {% if prep %}
