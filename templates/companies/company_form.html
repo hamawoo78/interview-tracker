@@ -9,6 +9,14 @@
     <div class="col-md-8">
         <div class="card">
             <div class="card-body">
+                <!-- AI Email Extraction Button (only show on create, not edit) -->
+                {% if not form.instance.pk %}
+                <div class="mb-3">
+                    <button type="button" class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#emailExtractionModal">
+                        <i class="bi bi-magic"></i> Paste Email (AI Fill)
+                    </button>
+                </div>
+                {% endif %}
                 <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
                     
@@ -111,4 +119,158 @@
         </div>
     </div>
 </div>
+
+<!-- Modal for Email Extraction -->
+<div class="modal fade" id="emailExtractionModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Extract Company Details from Email</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="extractionMessage" class="alert" style="display: none;"></div>
+                <div class="mb-3">
+                    <label for="emailTextarea" class="form-label">Paste your Company Detail here:</label>
+                    <textarea id="emailTextarea" class="form-control" rows="8" placeholder="Paste the entire interview email..."></textarea>
+                </div>
+                <small class="text-muted">
+                    <i class="bi bi-info-circle"></i> 
+                    AI will extract: interviewer name, interview type, date/time, meeting link, and notes.
+                </small>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="extractBtn">
+                    <span id="extractBtnText">Extract Details</span>
+                    <span id="extractBtnSpinner" class="spinner-border spinner-border-sm ms-2" style="display: none;"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Handle email extraction
+document.getElementById('extractBtn').addEventListener('click', async function() {
+    const emailText = document.getElementById('emailTextarea').value.trim();
+    const messageDiv = document.getElementById('extractionMessage');
+    const extractBtn = document.getElementById('extractBtn');
+    const extractBtnText = document.getElementById('extractBtnText');
+    const extractBtnSpinner = document.getElementById('extractBtnSpinner');
+    
+    // Validate input
+    if (!emailText) {
+        messageDiv.className = 'alert alert-warning';
+        messageDiv.textContent = 'Please paste an email first.';
+        messageDiv.style.display = 'block';
+        return;
+    }
+    
+    // Show loading state
+    extractBtn.disabled = true;
+    extractBtnText.style.display = 'none';
+    extractBtnSpinner.style.display = 'inline-block';
+    messageDiv.style.display = 'none';
+    
+    try {
+        // Call API endpoint
+        const response = await fetch('{% url "extract_company_info_email" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            },
+            body: JSON.stringify({ email_text: emailText })
+        });
+        
+        const result = await response.json();
+        
+        if (result.ok) {
+            // Success: Fill form fields with extracted data
+            fillFormFields(result.data);
+            
+            // Show success message
+            messageDiv.className = 'alert alert-success';
+            messageDiv.innerHTML = '<i class="bi bi-check-circle"></i> Details extracted! Review and edit below, then click "Create Interview".';
+            messageDiv.style.display = 'block';
+            
+            // Close modal after 2 seconds
+            setTimeout(() => {
+                bootstrap.Modal.getInstance(document.getElementById('emailExtractionModal')).hide();
+            }, 2000);
+        } else {
+            // Error from API
+            messageDiv.className = 'alert alert-danger';
+            messageDiv.innerHTML = `<i class="bi bi-exclamation-circle"></i> ${result.error}`;
+            messageDiv.style.display = 'block';
+        }
+    } catch (error) {
+        messageDiv.className = 'alert alert-danger';
+        messageDiv.innerHTML = `<i class="bi bi-exclamation-circle"></i> Network error: ${error.message}`;
+        messageDiv.style.display = 'block';
+    } finally {
+        // Reset button state
+        extractBtn.disabled = false;
+        extractBtnText.style.display = 'inline';
+        extractBtnSpinner.style.display = 'none';
+    }
+});
+
+// Fill form fields with extracted data
+function fillFormFields(data) {
+    console.log('Filling form with data:', data);
+    
+    // Company name
+    if (data.company_name) {
+        const nameField = document.getElementById('id_name');
+        if (nameField) {
+            nameField.value = data.company_name;
+            console.log('Filled company name:', data.company_name);
+        }
+    }
+    
+    // Position title
+    if (data.position_title) {
+        const posField = document.getElementById('id_position_title');
+        if (posField) posField.value = data.position_title;
+    }
+
+    // Location
+    if (data.location) {
+        const locField = document.getElementById('id_location');
+        if (locField) locField.value = data.location;
+    }
+    
+    // Website URL
+    if (data.website_url) {
+        const webField = document.getElementById('id_website_url');
+        if (webField) webField.value = data.website_url;
+    }
+    
+    // Salary min
+    if (data.salary_min) {
+        const minField = document.getElementById('id_salary_min');
+        if (minField) minField.value = data.salary_min;
+    }
+
+    // Salary max
+    if (data.salary_max) {
+        const maxField = document.getElementById('id_salary_max');
+        if (maxField) maxField.value = data.salary_max;
+    }
+
+    // Job description URL
+    if (data.job_description_url) {
+        const jobField = document.getElementById('id_job_description_url');
+        if (jobField) jobField.value = data.job_description_url;
+    }
+}
+
+// Clear modal on close
+document.getElementById('emailExtractionModal').addEventListener('hidden.bs.modal', function() {
+    document.getElementById('emailTextarea').value = '';
+    document.getElementById('extractionMessage').style.display = 'none';
+});
+</script>
 {% endblock %}

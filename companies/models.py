@@ -14,7 +14,7 @@ class Company(models.Model):
     logo = models.ImageField(upload_to='logos/', blank=True, null=True)
     website_url = models.URLField(blank=True, null=True)
     location = models.CharField(max_length=255, blank=True, null=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='applied')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='interview')
     salary_min = models.IntegerField(blank=True, null=True)
     salary_max = models.IntegerField(blank=True, null=True)
     position_title = models.CharField(max_length=255, blank=True, null=True)

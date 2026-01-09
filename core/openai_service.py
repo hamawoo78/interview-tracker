@@ -58,6 +58,62 @@ def extract_interview_details(email_text: str) -> dict:
         # Extract JSON from response
         response_text = response.choices[0].message.content.strip()
         
+        # Parse JSONs
+        extracted_data = json.loads(response_text)
+        print(extracted_data)
+        return extracted_data
+        
+    except json.JSONDecodeError as e:
+        return {"error": f"Failed to parse AI response as JSON: {str(e)}"}
+    except Exception as e:
+        return {"error": f"OpenAI API error: {str(e)}"}
+
+
+def extract_company_details(email_text: str) -> dict:
+    """
+    Send company detail to OpenAI and return extracted data as dict.
+    Uses chat.completions API (correct method).
+    Returns dict with extracted fields or error info.
+    """
+
+
+    prompt = f"""Extract company/job details from the email below.
+        Return ONLY valid JSON with these fields (use null for unknown values):
+
+        Fields:
+        - company_name
+        - position_title
+        - location
+        - website_url
+        - salary_min
+        - salary_max
+        - job_description_url
+
+        Rules:
+        - Do NOT guess missing values
+        - Use null for unknown fields
+        - Return ONLY JSON, no extra text
+
+
+        Email:
+        \"\"\"
+        {email_text}
+        \"\"\"
+        """
+
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4.1-nano",
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant that extracts company/ job details from emails. Always return valid JSON."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.3,
+        )
+        
+        # Extract JSON from response
+        response_text = response.choices[0].message.content.strip()
+        
         # Parse JSON
         extracted_data = json.loads(response_text)
         print(extracted_data)
@@ -67,3 +123,4 @@ def extract_interview_details(email_text: str) -> dict:
         return {"error": f"Failed to parse AI response as JSON: {str(e)}"}
     except Exception as e:
         return {"error": f"OpenAI API error: {str(e)}"}
+
