@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils import timezone
+from django.contrib.auth.models import User
 
 
 class Company(models.Model):
@@ -10,6 +11,7 @@ class Company(models.Model):
         ('rejected', 'Rejected'),
     ]
 
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='companies')
     name = models.CharField(max_length=255)
     logo = models.ImageField(upload_to='logos/', blank=True, null=True)
     website_url = models.URLField(blank=True, null=True)

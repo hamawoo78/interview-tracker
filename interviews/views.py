@@ -26,8 +26,9 @@ class InterviewEventCreateView(LoginRequiredMixin, CreateView):
 
     def form_valid(self, form):
         company_id = self.kwargs.get('company_id')
-        company = get_object_or_404(Company, pk=company_id)
+        company = get_object_or_404(Company, pk=company_id, user=self.request.user)
         form.instance.company = company
+        form.instance.user = self.request.user
         response = super().form_valid(form)
         messages.success(self.request, "Interview event created successfully!")
         return response

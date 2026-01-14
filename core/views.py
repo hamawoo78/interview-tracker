@@ -1,12 +1,13 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.utils import timezone
 from datetime import timedelta
 from companies.models import Company
 from interviews.models import InterviewEvent
 from django.db.models import Q
-from .forms import UserProfileForm
+from .forms import UserProfileForm, UserRegistrationForm
 from .models import UserProfile
 
 
@@ -15,7 +16,7 @@ def dashboard(request):
     """Dashboard view with company cards and weekly calendar."""
     query = request.GET.get('q', '')
     
-    companies = Company.objects.all()
+    companies = Company.objects.filter(user=request.user)
     if query:
         companies = companies.filter(
             Q(name__icontains=query) |
@@ -27,6 +28,7 @@ def dashboard(request):
     now = timezone.now()
     week_end = now + timedelta(days=7)
     upcoming_interviews = InterviewEvent.objects.filter(
+        user=request.user,
         start_datetime__gte=now,
         start_datetime__lte=week_end
     ).order_by('start_datetime')
@@ -73,8 +75,8 @@ def calendar(request):
     return render(request, 'core/calendar.html', context)
 
 
-@login_required
-def messages(request):
+
+def messages_view(request):
     """Messages placeholder page."""
     return render(request, 'core/messages.html')
 
@@ -102,3 +104,25 @@ def settings_view(request):
         'current_timezone': timezone.get_current_timezone(),
     }
     return render(request, 'core/settings.html', context)
+
+
+def register(request):
+    """User registration page."""
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+    
+    if request.method == 'POST':
+        form = UserRegistrationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            # Create UserProfile for the new user
+            UserProfile.objects.create(user=user)
+            # Log the user in
+            login(request, user)
+            messages.success(request, 'Account created successfully! Welcome to InterviewTracker.')
+            return redirect('dashboard')
+    else:
+        form = UserRegistrationForm()
+    
+    context = {'form': form}
+    return render(request, 'auth/register.html', context)

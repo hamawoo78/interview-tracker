@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils import timezone
+from django.contrib.auth.models import User
 from companies.models import Company
 
 
@@ -13,6 +14,7 @@ class InterviewEvent(models.Model):
         ('other', 'Other'),
     ]
 
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='interviews')
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='interviews')
     start_datetime = models.DateTimeField()
     # end_datetime = models.DateTimeField(blank=True, null=True)
