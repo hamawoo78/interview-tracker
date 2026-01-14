@@ -56,6 +56,7 @@ def calendar(request):
     now = timezone.now()
     week_end = now + timedelta(days=7)
     upcoming_interviews = InterviewEvent.objects.filter(
+        user=request.user,
         start_datetime__gte=now,
         start_datetime__lte=week_end
     ).order_by('start_datetime')

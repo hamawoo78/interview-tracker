@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
-from django.contrib import messages
+from django.contrib import messages 
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
@@ -22,7 +22,7 @@ class CompanyListView(LoginRequiredMixin, ListView):
     paginate_by = 20
 
     def get_queryset(self):
-        queryset = Company.objects.all()
+        queryset = Company.objects.filter(user=self.request.user)
         status = self.request.GET.get('status')
         location = self.request.GET.get('location')
         
@@ -61,6 +61,7 @@ class CompanyCreateView(LoginRequiredMixin, CreateView):
     success_url = reverse_lazy('company_list')
 
     def form_valid(self, form):
+        form.instance.user = self.request.user
         response = super().form_valid(form)
         messages.success(self.request, f"Company '{self.object.name}' created successfully!")
         return response
@@ -96,7 +97,7 @@ class CompanyDeleteView(LoginRequiredMixin, DeleteView):
 @login_required
 def company_list_api(request):
     """API endpoint for company list (for sidebar dropdown)."""
-    companies = Company.objects.all().values('id', 'name')
+    companies = Company.objects.filter(user=request.user).values('id', 'name')
     return render(request, 'companies/company_list_dropdown.html', {'companies': companies})
 
 
