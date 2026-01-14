@@ -143,3 +143,14 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'dashboard'
+
+# CSRF and Security settings for production
+CSRF_TRUSTED_ORIGINS = [
+    'https://interview-tracker-52v8.onrender.com',
+    'http://127.0.0.1:8000',
+    'http://localhost:8000',
+]
+CSRF_COOKIE_SECURE = True
+CSRF_COOKIE_HTTPONLY = False
+SESSION_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
